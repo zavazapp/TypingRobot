@@ -1,0 +1,27 @@
+.paddingSmall{
+    -fx-padding: 4px;
+}
+
+.paddingMedium{
+    -fx-padding: 8px;
+}
+
+.paddingLarge{
+    -fx-padding: 16px;
+}
+
+.positiveTextColor{
+    -fx-text-fill: green;
+}
+
+.negativeTextColor{
+    -fx-text-fill: red;
+}
+
+.fontSmall{
+   
+}
+
+.interactiveBckground{
+    -fx-background-color: blueviolet;
+}
