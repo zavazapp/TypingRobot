@@ -33,14 +33,15 @@ import javafx.scene.input.TransferMode;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.apache.commons.compress.utils.FileNameUtils;
-import typingrobot.Utils.AlertUtils;
+import typingrobot.utils.AlertUtils;
 import typingrobot.tools.TypingUtility;
 
 import typingrobot.models.InvoiceRow;
-import typingrobot.tools.FileLoader;
 import typingrobot.controllers.interfaces.CurrentRowObservable;
 import typingrobot.controllers.interfaces.IErrorInterface;
+import typingrobot.tools.fileLoading.FileLoadable;
 import typingrobot.tools.Preferences;
+import typingrobot.tools.fileLoading.LoaderFactory;
 
 /**
  *
@@ -52,7 +53,8 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     private ObservableList<InvoiceRow> observableList;
     private TypingUtility typingUtility;
     private Preferences preferences;
-            
+    private final String VERSION = "version: 0.1.alpha\n\n2021"; //May 2021
+
     @FXML
     private Label dropField;
     @FXML
@@ -89,9 +91,14 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     private TableColumn<?, ?> paymentCode;
     @FXML
     private Label errorLabel;
- 
-     //</editor-fold>
-    
+    @FXML
+    private TextField tableFirstRow; //user choice - first row of a table in excel file
+    @FXML
+    private MenuItem menuItemUserInstrusctions;
+    @FXML
+    private Label userInstructions;
+
+    //</editor-fold>
     //entry point - initialize variables and set up starting UI components
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -102,11 +109,11 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         hasHeaders.setSelected(preferences.getBoolean("hasHeader", true));
         errorLabel.setVisible(false);
     }
-    
+
     //Save user choice for hasHeader check box choice
     @FXML
     private void onHasHeaderChange(ActionEvent event) {
-        CheckBox checkBox = ((CheckBox)event.getSource());
+        CheckBox checkBox = ((CheckBox) event.getSource());
         preferences.putBoolean("hasHeader", checkBox.isSelected());
     }
 
@@ -125,14 +132,28 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     //as implemented in FileLoader class.
     @FXML
     private void onDragDroped(DragEvent event) throws IOException, FileNotFoundException, AWTException {
+        handleStartStopButtons(true, false);
+        
         File droppedFile = event.getDragboard().getFiles().get(0);
         String fileExtension = FileNameUtils.getExtension(droppedFile.getName());
 
         //FileLoader needs a File and its extension.
         //FileLoader also need boolean hasHeadre from user choice
         //Returns ObservableList<InvoiceRow>
-        observableList.addAll(new FileLoader(droppedFile, hasHeaders.isSelected(), this).getList(fileExtension));
-        handleStartStopButtons(!observableList.isEmpty(), false);
+        int rowOffset;
+        try {
+            rowOffset = Integer.parseInt(tableFirstRow.getText());
+            if (rowOffset < 1) {
+                rowOffset = 1;
+            }
+        } catch (Exception e) {
+            rowOffset = 1;
+        }
+        
+        FileLoadable fileLoader = LoaderFactory.get(fileExtension, droppedFile, hasHeaders.isSelected(), rowOffset, this);
+
+        observableList.addAll(fileLoader.getList(fileExtension));
+        
         dropField.setText(droppedFile.getName());
     }
 
@@ -140,7 +161,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     //`Start typing` buuton click listener
     @FXML
     private void startTyping(ActionEvent event) throws AWTException {
-        
+
         //Create TypingUtility object, set countDown label and set callback
         typingUtility = new TypingUtility(Integer.parseInt(delayTextField.getText()));
         typingUtility.setCountDownLabel(countDownLabel);
@@ -182,7 +203,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
 
     /*Start position handling*/
     @FXML
-    private void onTableMouseClicked(MouseEvent event) {
+    private void onTableRowClick(MouseEvent event) {
         startingPositionLabel.setText(String.valueOf(getStartingPosition() + 1));
     }
 
@@ -191,14 +212,14 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         return startPosition == -1 ? 0 : startPosition;
     }
 
+    //Tooltip for start position Label
     @FXML
     private void onStartPositionClick(MouseEvent event) {
         tooltip.show(startButton, event.getScreenX(), event.getScreenY());
         tooltip.setAutoHide(true);
     }
-    /*END start pos. handling*/
 
-    
+    /*END start pos. handling*/
     //Right click on dropField opens context menu for clearing observable list
     @FXML
     private void onDropFieldContextMenuRequest(ContextMenuEvent event) {
@@ -224,6 +245,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         stopButton.setDisable(!stopEnabled);
     }
 
+    //Menu items
     @FXML
     private void onMenuItemClose(ActionEvent event) {
         System.exit(0);
@@ -236,21 +258,48 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         Scene scene = new Scene(root);
         stage.setScene(scene);
         stage.initStyle(StageStyle.DECORATED);
-        
+
         stage.show();
+    }
+
+    @FXML
+    private void onMenuItemUserInstructions(ActionEvent event) throws IOException {
+        showWebViewStage();
     }
 
     @FXML
     private void onMenuItemAbout(ActionEvent event) {
         AlertUtils.getSimpleAlert(
-                Alert.AlertType.INFORMATION, "About AutoType", "Created by Miodrag Spasic", "version: 0.1\n\n2021")
+                Alert.AlertType.INFORMATION,
+                "About Typing Robot",
+                "Created by Miodrag Spasic",
+                VERSION)
                 .show();
     }
+    //END Menu items
 
+    @FXML
+    private void onUserInstructionsClick(MouseEvent event) throws IOException {
+        showWebViewStage();
+    }
+
+    //Callback received from AbstractFileLoader.
+    //Sets text on a label, informing user about erors of successfuly loaded file.
     @Override
-    public void onAnyError(String error) {
+    public void onAnyError(String error, boolean critical) {
         errorLabel.setText(error);
         errorLabel.setVisible(!error.isEmpty());
+        handleStartStopButtons(!critical, false);
+    }
+
+    private void showWebViewStage() throws IOException {
+        Parent root = FXMLLoader.load(FXML_Home_Controller.class.getResource("/typingrobot/fxml/FXML_Instructions.fxml"));
+        Stage stage = new Stage();
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.initStyle(StageStyle.DECORATED);
+
+        stage.show();
     }
 
 }

@@ -158,6 +158,7 @@ public class TypingUtility implements CountDownCallback {
         rowInjectorTimerTask.cancel();
         timer.cancel();
         countDownTimer.cancel();
+        countDownLabel.setVisible(false);
     }
 
     @Override

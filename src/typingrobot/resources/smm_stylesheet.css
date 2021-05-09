@@ -25,3 +25,11 @@
 .interactiveBckground{
     -fx-background-color: blueviolet;
 }
+
+.dropFieldBacground{
+    -fx-background-color: #3e404d;
+}
+
+.columnTextCenter{
+    -fx-alignment: CENTER;
+}
