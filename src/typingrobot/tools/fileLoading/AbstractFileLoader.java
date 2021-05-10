@@ -1,7 +1,9 @@
 package typingrobot.tools.fileLoading;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Calendar;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -28,6 +30,8 @@ import typingrobot.models.InvoiceRow;
  *
  * 09.05.2021. - changed to abstract
  *
+ * 10.05.2021. - Stage injection for secondary window positioning
+ *
  * Loader classes extend FileLoader to share common methods. Each loader class
  * has its own implementation of FileLoadable interface methods depending on
  * file type input.
@@ -45,16 +49,26 @@ public abstract class AbstractFileLoader {
     public Calendar calendar;
     public int firstTableRow;
     public ObservableList<InvoiceRow> list = FXCollections.observableArrayList();
+    public Stage stage;
 
     //Variable that holds user choice of table property `hasHeadres`
     public final boolean hasHeader;
 
-    public AbstractFileLoader(File fileToLoad, boolean hasHeader, int firstTableRow, IErrorInterface errorCalback) {
+    public AbstractFileLoader(
+            File fileToLoad,
+            boolean hasHeader,
+            int firstTableRow,
+            IErrorInterface errorCalback) {
+
         this.fileToLoad = fileToLoad;
         this.hasHeader = hasHeader;
         this.errorCallback = errorCalback;
         this.firstTableRow = firstTableRow;
         calendar = Calendar.getInstance();
+    }
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
     }
 
     //Shows alert dialog if file fails to load, offering help 
@@ -67,13 +81,17 @@ public abstract class AbstractFileLoader {
                 showHelp, close);
         alert.setTitle("Error parsing file");
 
+        if (stage != null) {
+            alert.initOwner(stage);
+        }
+
         Optional<ButtonType> result = alert.showAndWait();
 
         if (result.get().equals(close)) {
             alert.close();
         } else {
             try {
-                showWebViewStage();
+                showWebViewStageInBrowser();
             } catch (IOException ex) {
                 Logger.getLogger(AbstractFileLoader.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -86,12 +104,20 @@ public abstract class AbstractFileLoader {
     //Shows help about forming proper excel file
     public void showWebViewStage() throws IOException {
         Parent root = FXMLLoader.load(FXML_Home_Controller.class.getResource("/typingrobot/fxml/FXML_Instructions.fxml"));
-        Stage stage = new Stage();
+        Stage webViewStage = new Stage();
         Scene scene = new Scene(root);
-        stage.setScene(scene);
-        stage.initStyle(StageStyle.DECORATED);
+        webViewStage.setScene(scene);
+        webViewStage.initStyle(StageStyle.DECORATED);
 
-        stage.show();
+        if (stage != null) {
+            webViewStage.initOwner(stage);
+        }
+
+        webViewStage.show();
+    }
+
+    private void showWebViewStageInBrowser() throws IOException {
+        Desktop.getDesktop().browse(URI.create(FXML_Home_Controller.URL));
     }
 
     //Maps each row of excel table to java object (InvoiceRow)
@@ -106,6 +132,11 @@ public abstract class AbstractFileLoader {
                 id = id.split("[.]")[0].trim();
             }
 
+//            //remove dots from payment code
+//            String paymentCode = row.getCell(0).toString();
+//            if (id.contains(".")) {
+//                id = id.split("[.]")[0].trim();
+//            }
             //remove dots from year
             String year = row.getCell(colCount - 2).toString();
             if (year != null && !year.equals("") && year.contains(".")) {
@@ -144,7 +175,11 @@ public abstract class AbstractFileLoader {
                     //Excel file has 5 columns and one of them is "Payment code".
                     //If that is the case, read paymemt code from table.
                     ir.setId(id);
-                    ir.setPaymentCode(row.getCell(1).toString());
+                    String paymentCode = row.getCell(1).toString();
+                    if (paymentCode.contains(".")) {
+                        paymentCode = paymentCode.split("[.]")[0];
+                    }
+                    ir.setPaymentCode(paymentCode);
                     ir.setInvoiceNumber(row.getCell(2).toString());
                     ir.setInvoiceYear(year);
                     ir.setInvoiceAmount(amount);
@@ -188,7 +223,7 @@ public abstract class AbstractFileLoader {
                             + "voice year is zero in row: ")
                     .append(ir.getId());
         }
-        
+
         if (tempYear < calendar.get(Calendar.YEAR) - 5) {
             errorStringBuilder
                     .append("\nInvoice year does not have logical value in row: ")
@@ -231,7 +266,6 @@ public abstract class AbstractFileLoader {
                     .append("\nInvoice amount contains invalid characters in row: ")
                     .append(ir.getId());
         }
-
 
         if (!errorStringBuilder.toString().equals("Error!")) {
             errorCallback.onAnyError(errorStringBuilder.toString(), critical);

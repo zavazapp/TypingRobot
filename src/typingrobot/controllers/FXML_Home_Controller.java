@@ -1,9 +1,11 @@
 package typingrobot.controllers;
 
 import java.awt.AWTException;
+import java.awt.Desktop;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
@@ -14,6 +16,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Bounds;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -32,6 +35,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.Window;
 import org.apache.commons.compress.utils.FileNameUtils;
 import typingrobot.utils.AlertUtils;
 import typingrobot.tools.TypingUtility;
@@ -41,6 +45,7 @@ import typingrobot.controllers.interfaces.CurrentRowObservable;
 import typingrobot.controllers.interfaces.IErrorInterface;
 import typingrobot.tools.fileLoading.FileLoadable;
 import typingrobot.tools.Preferences;
+import typingrobot.tools.fileLoading.AbstractFileLoader;
 import typingrobot.tools.fileLoading.LoaderFactory;
 
 /**
@@ -53,7 +58,8 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     private ObservableList<InvoiceRow> observableList;
     private TypingUtility typingUtility;
     private Preferences preferences;
-    private final String VERSION = "version: 0.1.alpha\n\n2021"; //May 2021
+    public final static String URL = "https://www.zavazapp.com/apps/typing-robot";
+    private final String VERSION = "version: 0.1.alpha\n\n2021"; //09 May 2021
 
     @FXML
     private Label dropField;
@@ -133,7 +139,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     @FXML
     private void onDragDroped(DragEvent event) throws IOException, FileNotFoundException, AWTException {
         handleStartStopButtons(true, false);
-        
+
         File droppedFile = event.getDragboard().getFiles().get(0);
         String fileExtension = FileNameUtils.getExtension(droppedFile.getName());
 
@@ -149,11 +155,15 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         } catch (Exception e) {
             rowOffset = 1;
         }
-        
-        FileLoadable fileLoader = LoaderFactory.get(fileExtension, droppedFile, hasHeaders.isSelected(), rowOffset, this);
 
-        observableList.addAll(fileLoader.getList(fileExtension));
+        FileLoadable fileLoader = LoaderFactory.get(fileExtension, droppedFile, hasHeaders.isSelected(), rowOffset, this);
         
+        //Inject Stage variable to FileLoadable instance for accesing windoe
+        //Used to center secondary stages to center of app window
+        ((AbstractFileLoader)fileLoader).setStage((Stage)dropField.getScene().getWindow());
+        
+        observableList.addAll(fileLoader.getList(fileExtension));
+
         dropField.setText(droppedFile.getName());
     }
 
@@ -161,6 +171,15 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     //`Start typing` buuton click listener
     @FXML
     private void startTyping(ActionEvent event) throws AWTException {
+        int delay = 10;
+        try {
+            delay = Integer.parseInt(delayTextField.getText());
+        } catch (Exception e) {
+            delay = 10;
+        }
+        if (delay < 2 || delay > 2000) {
+            delay = 15;
+        }
 
         //Create TypingUtility object, set countDown label and set callback
         typingUtility = new TypingUtility(Integer.parseInt(delayTextField.getText()));
@@ -189,8 +208,13 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                tableView.getSelectionModel().select(row);
-                tableView.scrollTo(row);
+
+                if (row > 0) {
+                    tableView.getSelectionModel().select(row - 1 );
+                    tableView.scrollTo(row - 1);
+                    startingPositionLabel.setText(String.valueOf(row));
+                }
+
             }
         });
     }
@@ -258,18 +282,24 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         Scene scene = new Scene(root);
         stage.setScene(scene);
         stage.initStyle(StageStyle.DECORATED);
+        Window w = dropField.getScene().getWindow();
+        
+        stage.setX(w.getX() + 50);
+        stage.setY(w.getY() + 50);
 
         stage.show();
     }
 
     @FXML
     private void onMenuItemUserInstructions(ActionEvent event) throws IOException {
-        showWebViewStage();
+        showWebViewStageInBrowser();
+//        showWebViewStage();
     }
 
     @FXML
     private void onMenuItemAbout(ActionEvent event) {
         AlertUtils.getSimpleAlert(
+                (Stage)dropField.getScene().getWindow(),
                 Alert.AlertType.INFORMATION,
                 "About Typing Robot",
                 "Created by Miodrag Spasic",
@@ -280,7 +310,8 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
 
     @FXML
     private void onUserInstructionsClick(MouseEvent event) throws IOException {
-        showWebViewStage();
+        showWebViewStageInBrowser();
+//        showWebViewStage();
     }
 
     //Callback received from AbstractFileLoader.
@@ -300,6 +331,10 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         stage.initStyle(StageStyle.DECORATED);
 
         stage.show();
+    }
+
+    private void showWebViewStageInBrowser() throws IOException {
+        Desktop.getDesktop().browse(URI.create(URL));
     }
 
 }

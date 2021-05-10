@@ -10,7 +10,6 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
 import typingrobot.TypingRobot;
-import typingrobot.tools.CountDownTimer;
 import typingrobot.models.InvoiceRow;
 import typingrobot.controllers.interfaces.CurrentRowObservable;
 import typingrobot.controllers.interfaces.CountDownCallback;
@@ -129,8 +128,6 @@ public class TypingUtility implements CountDownCallback {
                     injectRow(data.get(tempCount));
                     tempCount++;
 
-                    currentRowObservable.onNextRow(tempCount); //signal to UI
-
                     //if no more rows available
                     if (tempCount == data.size()) {
                         stopTyping();
@@ -183,17 +180,20 @@ public class TypingUtility implements CountDownCallback {
     // and passd in constructor TypingUtility(int delay);
     private void injectRow(InvoiceRow invoiceRow) {
 
+        //id
         if (typeIdsCheckBox) {
             typeCharsequence(invoiceRow.getId());
             robot.keyPress(KeyEvent.VK_ENTER);
             robot.keyRelease(KeyEvent.VK_ENTER);
         }
 
+        //payment code
         typeCharsequence(invoiceRow.getPaymentCode());
         robot.keyPress(KeyEvent.VK_ENTER);
         robot.keyRelease(KeyEvent.VK_ENTER);
 
-        if (typeInvoiceInDscCheckBox) {
+        //description
+        if (typeInvoiceInDscCheckBox || !invoiceRow.getPaymentCode().contains("112")) {
             typeCharsequence(invoiceRow.getInvoiceNumber());
             robot.keyPress(KeyEvent.VK_ENTER);
             robot.keyRelease(KeyEvent.VK_ENTER);
@@ -202,7 +202,8 @@ public class TypingUtility implements CountDownCallback {
             robot.keyRelease(KeyEvent.VK_ENTER);
         }
 
-        if (invoiceRow.getPaymentCode().equals("112")) {
+        //invoice
+        if (invoiceRow.getPaymentCode().contains("112")) {
             typeCharsequence(invoiceRow.getInvoiceNumber());
             robot.keyPress(KeyEvent.VK_ENTER);
             robot.keyRelease(KeyEvent.VK_ENTER);
@@ -211,7 +212,8 @@ public class TypingUtility implements CountDownCallback {
             robot.keyRelease(KeyEvent.VK_ENTER);
         }
 
-        if (invoiceRow.getPaymentCode().equals("112")) {
+        //year
+        if (invoiceRow.getPaymentCode().contains("112")) {
             typeCharsequence(invoiceRow.getInvoiceYear());
             robot.keyPress(KeyEvent.VK_ENTER);
             robot.keyRelease(KeyEvent.VK_ENTER);
@@ -220,10 +222,12 @@ public class TypingUtility implements CountDownCallback {
             robot.keyRelease(KeyEvent.VK_ENTER);
         }
 
+        //amount
         typeCharsequence(invoiceRow.getInvoiceAmount());
         robot.keyPress(KeyEvent.VK_ENTER);
         robot.keyRelease(KeyEvent.VK_ENTER);
 
+        //after row ends
         if (addEnterCheckBox) {
             robot.keyPress(KeyEvent.VK_ENTER);
             robot.keyRelease(KeyEvent.VK_ENTER);
@@ -240,6 +244,15 @@ public class TypingUtility implements CountDownCallback {
             robot.keyPress(KeyEvent.VK_DOWN);
             robot.keyRelease(KeyEvent.VK_DOWN);
         }
+        
+        int currentRow;
+        try {
+            currentRow = Integer.parseInt(invoiceRow.getId());
+        } catch (Exception e) {
+            currentRow = 0;
+            
+        }
+        currentRowObservable.onNextRow(currentRow); //signal to UI
     }
 
     //Supose that each field in InvoiceRow consists of
@@ -281,6 +294,7 @@ public class TypingUtility implements CountDownCallback {
     //Have no better idea for generating key events
     //based on char value. 
     //Note: char may be formed with two or more keys.
+    
     //<editor-fold desc="chars">
     public void typeChar(char character) {
         switch (character) {

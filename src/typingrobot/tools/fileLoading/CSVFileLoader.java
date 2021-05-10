@@ -9,7 +9,6 @@ import javafx.collections.ObservableList;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.poi.ss.usermodel.Row;
 import typingrobot.controllers.interfaces.IErrorInterface;
 import typingrobot.models.InvoiceRow;
 

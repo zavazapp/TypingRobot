@@ -29,7 +29,11 @@ import typingrobot.models.InvoiceRow;
 
 public class XLSXFileLoader extends AbstractFileLoader implements FileLoadable {
 
-    public XLSXFileLoader(File fileToLoad, boolean hasHeader, int firstTableRow, IErrorInterface errorCalback) {
+    public XLSXFileLoader(
+            File fileToLoad, 
+            boolean hasHeader, 
+            int firstTableRow, 
+            IErrorInterface errorCalback) {
         super(fileToLoad, hasHeader, firstTableRow, errorCalback);
     }
 
