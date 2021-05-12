@@ -16,7 +16,6 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.Bounds;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -31,6 +30,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.DragEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.stage.Stage;
@@ -45,8 +45,9 @@ import typingrobot.controllers.interfaces.CurrentRowObservable;
 import typingrobot.controllers.interfaces.IErrorInterface;
 import typingrobot.tools.fileLoading.FileLoadable;
 import typingrobot.tools.Preferences;
-import typingrobot.tools.fileLoading.AbstractFileLoader;
-import typingrobot.tools.fileLoading.LoaderFactory;
+import typingrobot.tools.fileLoading.srtingBasedLoader.AbstractStringBasedFileLoader;
+import typingrobot.tools.fileLoading.srtingBasedLoader.StringBasedLoaderFactory;
+import typingrobot.utils.NumberFormatUtils;
 
 /**
  *
@@ -59,7 +60,10 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     private TypingUtility typingUtility;
     private Preferences preferences;
     public final static String URL = "https://www.zavazapp.com/apps/typing-robot";
-    private final String VERSION = "version: 0.1.alpha\n\n2021"; //09 May 2021
+
+//    private final String VERSION = "version: 0.1.alpha\n\n2021"; //09 May 2021
+    //String based loader added in hope to reduce dependancy on excel table format
+    private final String VERSION = "version: 0.2.alpha\n\n2021"; //12 May 2021
 
     @FXML
     private Label dropField;
@@ -98,7 +102,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     @FXML
     private Label errorLabel;
     @FXML
-    private TextField tableFirstRow; //user choice - first row of a table in excel file
+    private TextField totalSum; //total sum of invoices in table
     @FXML
     private MenuItem menuItemUserInstrusctions;
     @FXML
@@ -144,26 +148,23 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         String fileExtension = FileNameUtils.getExtension(droppedFile.getName());
 
         //FileLoader needs a File and its extension.
-        //FileLoader also need boolean hasHeadre from user choice
+        //FileLoader also need boolean hasHeadre from user choice//deprecated
         //Returns ObservableList<InvoiceRow>
-        int rowOffset;
-        try {
-            rowOffset = Integer.parseInt(tableFirstRow.getText());
-            if (rowOffset < 1) {
-                rowOffset = 1;
-            }
-        } catch (Exception e) {
-            rowOffset = 1;
-        }
+        int rowOffset = 1;
+        initFileLoader(fileExtension, droppedFile, rowOffset);
+    }
 
-        FileLoadable fileLoader = LoaderFactory.get(fileExtension, droppedFile, hasHeaders.isSelected(), rowOffset, this);
-        
+    private void initFileLoader(String fileExtension, File droppedFile, int rowOffset) throws IOException {
+        //FileLoadable fileLoader = RowBasedLoaderFactory.get(fileExtension, droppedFile, hasHeaders.isSelected(), rowOffset, this);
+        FileLoadable fileLoader = StringBasedLoaderFactory.get(fileExtension, droppedFile, hasHeaders.isSelected(), rowOffset, this);
+
         //Inject Stage variable to FileLoadable instance for accesing windoe
         //Used to center secondary stages to center of app window
-        ((AbstractFileLoader)fileLoader).setStage((Stage)dropField.getScene().getWindow());
-        
-        observableList.addAll(fileLoader.getList(fileExtension));
+        //(AbstractRowBasedFileLoader)fileLoader).setStage((Stage)dropField.getScene().getWindow());
+        ((AbstractStringBasedFileLoader) fileLoader).setStage((Stage) dropField.getScene().getWindow());
 
+        observableList.addAll(fileLoader.getList(fileExtension));
+        totalSum.setText(String.valueOf(fileLoader.getTotalSum()));
         dropField.setText(droppedFile.getName());
     }
 
@@ -210,7 +211,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
             public void run() {
 
                 if (row > 0) {
-                    tableView.getSelectionModel().select(row - 1 );
+                    tableView.getSelectionModel().select(row - 1);
                     tableView.scrollTo(row - 1);
                     startingPositionLabel.setText(String.valueOf(row));
                 }
@@ -228,7 +229,14 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     /*Start position handling*/
     @FXML
     private void onTableRowClick(MouseEvent event) {
-        startingPositionLabel.setText(String.valueOf(getStartingPosition() + 1));
+        if (event.getClickCount() == 1) {
+            startingPositionLabel.setText(String.valueOf(getStartingPosition() + 1));
+        }
+
+        if (event.getButton().equals(MouseButton.SECONDARY)) {
+            onTableSecondaryButtonClicked(event);
+        }
+
     }
 
     private int getStartingPosition() {
@@ -283,7 +291,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         stage.setScene(scene);
         stage.initStyle(StageStyle.DECORATED);
         Window w = dropField.getScene().getWindow();
-        
+
         stage.setX(w.getX() + 50);
         stage.setY(w.getY() + 50);
 
@@ -299,7 +307,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     @FXML
     private void onMenuItemAbout(ActionEvent event) {
         AlertUtils.getSimpleAlert(
-                (Stage)dropField.getScene().getWindow(),
+                (Stage) dropField.getScene().getWindow(),
                 Alert.AlertType.INFORMATION,
                 "About Typing Robot",
                 "Created by Miodrag Spasic",
@@ -314,7 +322,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
 //        showWebViewStage();
     }
 
-    //Callback received from AbstractFileLoader.
+    //Callback received from AbstractRowBasedFileLoader.
     //Sets text on a label, informing user about erors of successfuly loaded file.
     @Override
     public void onAnyError(String error, boolean critical) {
@@ -323,6 +331,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         handleStartStopButtons(!critical, false);
     }
 
+    @Deprecated
     private void showWebViewStage() throws IOException {
         Parent root = FXMLLoader.load(FXML_Home_Controller.class.getResource("/typingrobot/fxml/FXML_Instructions.fxml"));
         Stage stage = new Stage();
@@ -335,6 +344,20 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
 
     private void showWebViewStageInBrowser() throws IOException {
         Desktop.getDesktop().browse(URI.create(URL));
+    }
+
+    private void onTableSecondaryButtonClicked(MouseEvent evt) {
+        ContextMenu menu = new ContextMenu();
+        MenuItem item = new MenuItem("Delete");
+        item.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                observableList.remove(tableView.getSelectionModel().getSelectedIndex());
+            }
+        });
+
+        menu.getItems().add(item);
+        menu.show(dropField.getScene().getWindow(), evt.getScreenX(), evt.getScreenY());
     }
 
 }

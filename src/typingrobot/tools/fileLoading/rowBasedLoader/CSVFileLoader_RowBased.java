@@ -1,4 +1,4 @@
-package typingrobot.tools.fileLoading;
+package typingrobot.tools.fileLoading.rowBasedLoader;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,14 +11,16 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import typingrobot.controllers.interfaces.IErrorInterface;
 import typingrobot.models.InvoiceRow;
+import typingrobot.tools.fileLoading.FileLoadable;
 
 /**
  *
  * @author Miodrag Spasic
  */
-public class CSVFileLoader extends AbstractFileLoader implements FileLoadable{
+@Deprecated
+public class CSVFileLoader_RowBased extends AbstractRowBasedFileLoader implements FileLoadable{
 
-    public CSVFileLoader(File fileToLoad, boolean hasHeader, int firstTableRow, IErrorInterface errorCalback) {
+    public CSVFileLoader_RowBased(File fileToLoad, boolean hasHeader, int firstTableRow, IErrorInterface errorCalback) {
         super(fileToLoad, hasHeader, firstTableRow, errorCalback);
     }
 
@@ -122,6 +124,11 @@ public class CSVFileLoader extends AbstractFileLoader implements FileLoadable{
                 csvParser.close();
                 
                 return list;
+    }
+
+    @Override
+    public long getTotalSum() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
 }

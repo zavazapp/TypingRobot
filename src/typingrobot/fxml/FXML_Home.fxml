@@ -48,7 +48,7 @@
          <children>
                   <AnchorPane HBox.hgrow="ALWAYS">
                       <children>
-                          <Label fx:id="dropField" alignment="CENTER" contentDisplay="CENTER" onContextMenuRequested="#onDropFieldContextMenuRequest" onDragDropped="#onDragDroped" onDragOver="#onDragOver" prefHeight="100.0" prefWidth="200.0" stylesheets="@../resources/smm_stylesheet.css" text="Drop excel file here. Suported extensions: xls, xlsx, csv" textAlignment="CENTER" textFill="WHITE" wrapText="true">
+                          <Label fx:id="dropField" alignment="TOP_CENTER" contentDisplay="CENTER" onContextMenuRequested="#onDropFieldContextMenuRequest" onDragDropped="#onDragDroped" onDragOver="#onDragOver" prefHeight="100.0" prefWidth="200.0" stylesheets="@../resources/smm_stylesheet.css" text="Drop excel file here. Suported extensions: xls, xlsx, csv" textAlignment="CENTER" textFill="WHITE" wrapText="true">
                               <styleClass>
                                   <String fx:value="marginMedium" />
                                   <String fx:value="dropFieldBacground" />
@@ -78,12 +78,11 @@
                         <Cursor fx:constant="HAND" />
                      </cursor>
                   </Label>
-                  <Label layoutX="70.0" layoutY="79.0" text="Right click to clear table" textFill="#00eaff">
-                     <padding>
-                        <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
-                     </padding>
-                  </Label>
+                  <Label layoutX="70.0" layoutY="79.0" text="Right click to clear table" textFill="#00eaff" />
                       </children>
+               <HBox.margin>
+                  <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+               </HBox.margin>
                   </AnchorPane>
             <ImageView fitHeight="100.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true" HBox.hgrow="ALWAYS">
                <image>
@@ -125,8 +124,8 @@
                         </HBox>
                   <HBox alignment="CENTER_LEFT" layoutX="18.0" layoutY="164.0" prefWidth="200.0" stylesheets="@../resources/smm_stylesheet.css">
                      <children>
-                        <Label text="My excel table starts at row:" wrapText="true" HBox.hgrow="ALWAYS" />
-                        <TextField fx:id="tableFirstRow" alignment="CENTER" prefWidth="100.0" text="1" HBox.hgrow="NEVER">
+                        <Label text="Total sum:" wrapText="true" HBox.hgrow="ALWAYS" />
+                        <TextField fx:id="totalSum" alignment="CENTER" text="1" HBox.hgrow="NEVER">
                            <HBox.margin>
                               <Insets left="15.0" />
                            </HBox.margin>
@@ -141,7 +140,7 @@
                             <children>
                         <VBox prefWidth="200.0" VBox.vgrow="NEVER">
                            <children>
-                              <CheckBox fx:id="hasHeaders" alignment="TOP_CENTER" mnemonicParsing="false" onAction="#onHasHeaderChange" selected="true" text="My table has header">
+                              <CheckBox fx:id="hasHeaders" alignment="TOP_CENTER" mnemonicParsing="false" onAction="#onHasHeaderChange" selected="true" text="My table has header" visible="false">
                                  <opaqueInsets>
                                     <Insets />
                                  </opaqueInsets>

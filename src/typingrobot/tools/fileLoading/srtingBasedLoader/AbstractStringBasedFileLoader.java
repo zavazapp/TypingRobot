@@ -1,9 +1,10 @@
-package typingrobot.tools.fileLoading;
+package typingrobot.tools.fileLoading.srtingBasedLoader;
 
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.text.DecimalFormat;
 import java.util.Calendar;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -18,7 +19,6 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import org.apache.poi.ss.usermodel.Row;
 import typingrobot.controllers.FXML_Home_Controller;
 import typingrobot.controllers.interfaces.IErrorInterface;
 import typingrobot.models.InvoiceRow;
@@ -41,7 +41,7 @@ import typingrobot.models.InvoiceRow;
  * @FileLoader needs a File and its extension
  * @Return ObservableList<InvoiceRow>
  */
-public abstract class AbstractFileLoader {
+public abstract class AbstractStringBasedFileLoader {
 
     public final File fileToLoad; //dropped file
     public final IErrorInterface errorCallback;
@@ -50,11 +50,12 @@ public abstract class AbstractFileLoader {
     public int firstTableRow;
     public ObservableList<InvoiceRow> list = FXCollections.observableArrayList();
     public Stage stage;
+    public long totalSum;
 
     //Variable that holds user choice of table property `hasHeadres`
     public final boolean hasHeader;
 
-    public AbstractFileLoader(
+    public AbstractStringBasedFileLoader(
             File fileToLoad,
             boolean hasHeader,
             int firstTableRow,
@@ -70,6 +71,7 @@ public abstract class AbstractFileLoader {
     public void setStage(Stage stage) {
         this.stage = stage;
     }
+
 
     //Shows alert dialog if file fails to load, offering help 
     public void showLoadingError() {
@@ -93,7 +95,7 @@ public abstract class AbstractFileLoader {
             try {
                 showWebViewStageInBrowser();
             } catch (IOException ex) {
-                Logger.getLogger(AbstractFileLoader.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(AbstractStringBasedFileLoader.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
@@ -121,13 +123,13 @@ public abstract class AbstractFileLoader {
     }
 
     //Maps each row of excel table to java object (InvoiceRow)
-    public InvoiceRow getObjectFromRow(short colCount, Row row) {
+    public InvoiceRow getObjectFromStringArray(int colCount, String[] row) {
         InvoiceRow ir = new InvoiceRow();
 
         try {
 
             //remove dots from id
-            String id = row.getCell(0).toString();
+            String id = row[0];
             if (id.contains(".")) {
                 id = id.split("[.]")[0].trim();
             }
@@ -138,13 +140,13 @@ public abstract class AbstractFileLoader {
 //                id = id.split("[.]")[0].trim();
 //            }
             //remove dots from year
-            String year = row.getCell(colCount - 2).toString();
+            String year = row[colCount - 2];
             if (year != null && !year.equals("") && year.contains(".")) {
                 year = year.split("[.]")[0].trim();
             }
 
             //make sure amount is in format nn.nn or nn
-            String amount = row.getCell(colCount - 1).toString();
+            String amount = row[colCount - 1];
 
             if (!amount.equals("") && amount.length() > 2) {
                 if (String.valueOf(amount.charAt(amount.length() - 3)).equals(",")) {
@@ -157,6 +159,17 @@ public abstract class AbstractFileLoader {
                     }
                 }
             }
+            
+            //add invoice to total sum
+            try {
+                
+                float invoiceAmount = Float.valueOf(amount);
+                
+                totalSum += (long)invoiceAmount;
+            } catch (Exception e) {
+                System.out.println("Error in invoice ammount: " + this.getClass().getName() 
+                + "\n \t" + amount);
+            }
 
             switch (colCount) {
 
@@ -166,7 +179,7 @@ public abstract class AbstractFileLoader {
                     //Add 112 for micing column value.
                     ir.setId(id);
                     ir.setPaymentCode("112");
-                    ir.setInvoiceNumber(row.getCell(1).toString());
+                    ir.setInvoiceNumber(row[1]);
                     ir.setInvoiceYear(year);
                     ir.setInvoiceAmount(amount);
                     break;
@@ -175,12 +188,12 @@ public abstract class AbstractFileLoader {
                     //Excel file has 5 columns and one of them is "Payment code".
                     //If that is the case, read paymemt code from table.
                     ir.setId(id);
-                    String paymentCode = row.getCell(1).toString();
+                    String paymentCode = row[1];
                     if (paymentCode.contains(".")) {
                         paymentCode = paymentCode.split("[.]")[0];
                     }
                     ir.setPaymentCode(paymentCode);
-                    ir.setInvoiceNumber(row.getCell(2).toString());
+                    ir.setInvoiceNumber(row[2]);
                     ir.setInvoiceYear(year);
                     ir.setInvoiceAmount(amount);
                     break;

@@ -1,5 +1,6 @@
-package typingrobot.tools.fileLoading;
+package typingrobot.tools.fileLoading.rowBasedLoader;
 
+import typingrobot.tools.fileLoading.rowBasedLoader.AbstractRowBasedFileLoader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -10,6 +11,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import typingrobot.controllers.interfaces.IErrorInterface;
 import typingrobot.models.InvoiceRow;
+import typingrobot.tools.fileLoading.FileLoadable;
 
 /**
  *
@@ -26,10 +28,10 @@ import typingrobot.models.InvoiceRow;
  * XSSFCell: It is a class representing a cell in a row of XLSX file.
  *
  */
+@Deprecated
+public class XLSXFileLoader_RowBased extends AbstractRowBasedFileLoader implements FileLoadable {
 
-public class XLSXFileLoader extends AbstractFileLoader implements FileLoadable {
-
-    public XLSXFileLoader(
+    public XLSXFileLoader_RowBased(
             File fileToLoad, 
             boolean hasHeader, 
             int firstTableRow, 
@@ -45,7 +47,7 @@ public class XLSXFileLoader extends AbstractFileLoader implements FileLoadable {
 
         XSSFWorkbook w = null;
         XSSFSheet s = null;
-        short colCount = 0;
+        int colCount = 0;
 
         try {
             w = new XSSFWorkbook(inputStream);
@@ -55,7 +57,8 @@ public class XLSXFileLoader extends AbstractFileLoader implements FileLoadable {
             //if there are 5 columns, one of them is paymentCode
             //else, payment code is not included
             //Start generating rows from `firstTableRow`
-            colCount = s.getRow(firstTableRow).getLastCellNum();//TODO inv.terget exception
+            colCount = s.getRow(firstTableRow).getPhysicalNumberOfCells();//TODO inv.terget exception
+            
 
         } catch (Exception e) {
             System.out.println("Ecxeption in line " + 57);
@@ -79,7 +82,7 @@ public class XLSXFileLoader extends AbstractFileLoader implements FileLoadable {
                         
                         break;
                     }
-                    list.add(getObjectFromRow(colCount, row));
+                    list.add(invoiceRow);
 
                 }
             }
@@ -93,6 +96,11 @@ public class XLSXFileLoader extends AbstractFileLoader implements FileLoadable {
         inputStream.close();
 
         return list;
+    }
+
+    @Override
+    public long getTotalSum() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

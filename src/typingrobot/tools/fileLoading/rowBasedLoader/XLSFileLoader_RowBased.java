@@ -1,4 +1,4 @@
-package typingrobot.tools.fileLoading;
+package typingrobot.tools.fileLoading.rowBasedLoader;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,6 +10,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Row;
 import typingrobot.controllers.interfaces.IErrorInterface;
 import typingrobot.models.InvoiceRow;
+import typingrobot.tools.fileLoading.FileLoadable;
 
 /**
  *
@@ -26,9 +27,10 @@ import typingrobot.models.InvoiceRow;
  * HSSFCell: Class representing a cell in a row of XLS file.
  *
  */
-public class XLSFileLoader extends AbstractFileLoader implements FileLoadable {
+@Deprecated
+public class XLSFileLoader_RowBased extends AbstractRowBasedFileLoader implements FileLoadable {
 
-    public XLSFileLoader(File fileToLoad, boolean hasHeader, int firstTableRow, IErrorInterface errorCalback) {
+    public XLSFileLoader_RowBased(File fileToLoad, boolean hasHeader, int firstTableRow, IErrorInterface errorCalback) {
         super(fileToLoad, hasHeader, firstTableRow, errorCalback);
     }
 
@@ -52,6 +54,7 @@ public class XLSFileLoader extends AbstractFileLoader implements FileLoadable {
         //count columns in table
         //if there are 5 columns, one of them is paymentCode
         //else, payment code is not included
+//        short colCount1 = 4;
         short colCount1 = s1.getRow(firstTableRow).getLastCellNum();
 
         try {
@@ -82,6 +85,11 @@ public class XLSFileLoader extends AbstractFileLoader implements FileLoadable {
         inputStream1.close();
 
         return list;
+    }
+
+    @Override
+    public long getTotalSum() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
