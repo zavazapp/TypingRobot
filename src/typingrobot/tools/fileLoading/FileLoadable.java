@@ -8,10 +8,12 @@ import typingrobot.models.InvoiceRow;
 /**
  *
  * @author Miodrag Spasic
- * 
+ *
  * Implemented by file loaders
  */
 public interface FileLoadable {
-    ObservableList<InvoiceRow> getList(String fileExtension) throws FileNotFoundException, IOException;
-    long getTotalSum();
+
+    ObservableList<InvoiceRow> getList(String fileExtension, String specialType) throws FileNotFoundException, IOException;
+
+    double getTotalSum();
 }

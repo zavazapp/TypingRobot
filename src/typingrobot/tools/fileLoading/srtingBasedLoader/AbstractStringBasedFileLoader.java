@@ -31,6 +31,8 @@ import typingrobot.models.InvoiceRow;
  * 09.05.2021. - changed to abstract
  *
  * 10.05.2021. - Stage injection for secondary window positioning
+ * 
+ * 13.05.2021. - Nexe beton - special kind of excel format handling
  *
  * Loader classes extend FileLoader to share common methods. Each loader class
  * has its own implementation of FileLoadable interface methods depending on
@@ -50,7 +52,7 @@ public abstract class AbstractStringBasedFileLoader {
     public int firstTableRow;
     public ObservableList<InvoiceRow> list = FXCollections.observableArrayList();
     public Stage stage;
-    public long totalSum;
+    public double totalSum;
 
     //Variable that holds user choice of table property `hasHeadres`
     public final boolean hasHeader;
@@ -163,9 +165,9 @@ public abstract class AbstractStringBasedFileLoader {
             //add invoice to total sum
             try {
                 
-                float invoiceAmount = Float.valueOf(amount);
+                double invoiceAmount = Double.valueOf(amount);
                 
-                totalSum += (long)invoiceAmount;
+                totalSum += invoiceAmount;
             } catch (Exception e) {
                 System.out.println("Error in invoice ammount: " + this.getClass().getName() 
                 + "\n \t" + amount);

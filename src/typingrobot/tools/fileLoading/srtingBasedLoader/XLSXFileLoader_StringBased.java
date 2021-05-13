@@ -41,7 +41,7 @@ public class XLSXFileLoader_StringBased extends AbstractStringBasedFileLoader im
     }
 
     @Override
-    public ObservableList<InvoiceRow> getList(String fileExtension) throws FileNotFoundException, IOException {
+    public ObservableList<InvoiceRow> getList(String fileExtension, String specialType) throws FileNotFoundException, IOException {
         System.out.println("loading..." + ".xlsx");
 
         FileInputStream inputStream = new FileInputStream(fileToLoad);
@@ -49,45 +49,15 @@ public class XLSXFileLoader_StringBased extends AbstractStringBasedFileLoader im
         XSSFWorkbook w = null;
         XSSFSheet s = null;
         int colCount = 0;
-        ArrayList<String[]> table = new ArrayList<>();
+        ArrayList<String[]> table;
 
         try {
             w = new XSSFWorkbook(inputStream);
             s = w.getSheetAt(0);
 
             XSSFExcelExtractor extractor = new XSSFExcelExtractor(w);
-
-            String[] rows = extractor.getText().split("\n");
-
-            //Try to find biggining of a table
-            for (int i = 0; i < rows.length; i++) {
-                String[] row = Arrays.stream(rows[i].split("\t"))
-                        .filter(new Predicate<String>() {
-                            @Override
-                            public boolean test(String t) {
-                                return !t.trim().isEmpty();
-                            }
-                        }).toArray(String[]::new);
-                if (row.length > 3 && row[0].equals("1")) {
-                    firstTableRow = i;
-                    break;
-                }
-            }
-            System.out.println("firstTableRow" + firstTableRow);
-            //END try to find first row
-
-            for (int i = firstTableRow; i < rows.length; i++) {
-                String[] row = Arrays.stream(rows[i].split("\t"))
-                        .filter(new Predicate<String>() {
-                            @Override
-                            public boolean test(String t) {
-                                return !t.trim().isEmpty();
-                            }
-                        }).toArray(String[]::new);
-                if (row.length > 3) {
-                    table.add(row);
-                }
-            }
+            
+            table = new TableParser().getTableArray(extractor.getText(), specialType, firstTableRow);
 
             //count columns in table
             //if there are 5 columns, one of them is paymentCode
@@ -96,7 +66,7 @@ public class XLSXFileLoader_StringBased extends AbstractStringBasedFileLoader im
             colCount = table.get(0).length;
 
         } catch (Exception e) {
-            System.out.println("Ecxeption in line " + 57);
+            System.out.println("Ecxeption in line " + 69);
             showLoadingError();
             inputStream.close();
             return null;
@@ -128,7 +98,7 @@ public class XLSXFileLoader_StringBased extends AbstractStringBasedFileLoader im
     }
 
     @Override
-    public long getTotalSum() {
+    public double getTotalSum() {
         return totalSum;
     }
 

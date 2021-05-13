@@ -24,7 +24,7 @@ public class CSVFileLoader_StringBased extends AbstractStringBasedFileLoader imp
     }
 
     @Override
-    public ObservableList<InvoiceRow> getList(String fileExtension) throws FileNotFoundException, IOException {
+    public ObservableList<InvoiceRow> getList(String fileExtension, String specialType) throws FileNotFoundException, IOException {
         System.out.println("loading..." + ".csv");
 
         BufferedReader fileReader = null;
@@ -122,7 +122,7 @@ public class CSVFileLoader_StringBased extends AbstractStringBasedFileLoader imp
     }
 
     @Override
-    public long getTotalSum() {
+    public double getTotalSum() {
         return totalSum;
     }
 

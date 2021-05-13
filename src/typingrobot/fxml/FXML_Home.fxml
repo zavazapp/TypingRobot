@@ -6,6 +6,7 @@
 <?import javafx.scene.Cursor?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
@@ -122,14 +123,24 @@
                                 <String fx:value="paddingMedium" />
                             </styleClass>
                         </HBox>
-                  <HBox alignment="CENTER_LEFT" layoutX="18.0" layoutY="164.0" prefWidth="200.0" stylesheets="@../resources/smm_stylesheet.css">
+                  <HBox alignment="CENTER_LEFT" layoutX="18.0" layoutY="118.0" prefWidth="200.0" stylesheets="@../resources/smm_stylesheet.css">
                      <children>
                         <Label text="Total sum:" wrapText="true" HBox.hgrow="ALWAYS" />
-                        <TextField fx:id="totalSum" alignment="CENTER" text="1" HBox.hgrow="NEVER">
+                        <TextField fx:id="totalSumTextField" alignment="CENTER" text="1" HBox.hgrow="NEVER">
                            <HBox.margin>
                               <Insets left="15.0" />
                            </HBox.margin>
                         </TextField>
+                     </children>
+                     <styleClass>
+                        <String fx:value="marginMedium" />
+                        <String fx:value="paddingMedium" />
+                     </styleClass>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" layoutX="18.0" layoutY="164.0" stylesheets="@../resources/smm_stylesheet.css" VBox.vgrow="NEVER">
+                     <children>
+                        <Label prefWidth="50.0" text="Type:" wrapText="true" HBox.hgrow="ALWAYS" />
+                        <ComboBox fx:id="typeComboBox" HBox.hgrow="ALWAYS" />
                      </children>
                      <styleClass>
                         <String fx:value="marginMedium" />

@@ -37,7 +37,7 @@ public class XLSFileLoader_StringBased extends AbstractStringBasedFileLoader imp
     }
 
     @Override
-    public ObservableList<InvoiceRow> getList(String fileExtension) throws FileNotFoundException, IOException {
+    public ObservableList<InvoiceRow> getList(String fileExtension, String specialType) throws FileNotFoundException, IOException {
         System.out.println("loading..." + ".xls");
 
         FileInputStream inputStream1 = new FileInputStream(fileToLoad);
@@ -52,38 +52,8 @@ public class XLSFileLoader_StringBased extends AbstractStringBasedFileLoader imp
             s1 = w1.getSheetAt(0);
 
             ExcelExtractor extractor = new ExcelExtractor(w1);
-
-            String[] rows = extractor.getText().split("\n");
-
-            //Try to find biggining of a table
-            for (int i = 0; i < rows.length; i++) {
-                String[] row = Arrays.stream(rows[i].split("\t"))
-                        .filter(new Predicate<String>() {
-                            @Override
-                            public boolean test(String t) {
-                                return !t.trim().isEmpty();
-                            }
-                        }).toArray(String[]::new);
-                if (row.length > 3 && row[0].equals("1")) {
-                    firstTableRow = i;
-                    break;
-                }
-            }
-            System.out.println("firstTableRow" + firstTableRow);
-            //END try to find first row
-
-            for (int i = firstTableRow; i < rows.length; i++) {
-                String[] row = Arrays.stream(rows[i].split("\t"))
-                        .filter(new Predicate<String>() {
-                            @Override
-                            public boolean test(String t) {
-                                return !t.trim().isEmpty();
-                            }
-                        }).toArray(String[]::new);
-                if (row.length > 3) {
-                    table.add(row);
-                }
-            }
+            
+            table = new TableParser().getTableArray(extractor.getText(), specialType, firstTableRow);
 
             //count columns in table
             //if there are 5 columns, one of them is paymentCode
@@ -126,7 +96,7 @@ public class XLSFileLoader_StringBased extends AbstractStringBasedFileLoader imp
     }
 
     @Override
-    public long getTotalSum() {
+    public double getTotalSum() {
         return totalSum;
     }
 

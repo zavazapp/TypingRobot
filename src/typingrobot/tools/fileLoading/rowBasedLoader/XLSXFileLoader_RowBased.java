@@ -40,7 +40,7 @@ public class XLSXFileLoader_RowBased extends AbstractRowBasedFileLoader implemen
     }
 
     @Override
-    public ObservableList<InvoiceRow> getList(String fileExtension) throws FileNotFoundException, IOException {
+    public ObservableList<InvoiceRow> getList(String fileExtension, String specialType) throws FileNotFoundException, IOException {
         System.out.println("loading..." + ".xlsx");
 
         FileInputStream inputStream = new FileInputStream(fileToLoad);
@@ -99,7 +99,7 @@ public class XLSXFileLoader_RowBased extends AbstractRowBasedFileLoader implemen
     }
 
     @Override
-    public long getTotalSum() {
+    public double getTotalSum() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

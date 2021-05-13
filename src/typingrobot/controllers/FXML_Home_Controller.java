@@ -7,8 +7,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.text.NumberFormat;
+import java.util.Locale;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -21,6 +25,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -59,11 +64,14 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     private ObservableList<InvoiceRow> observableList;
     private TypingUtility typingUtility;
     private Preferences preferences;
+    private String specialType;
     public final static String URL = "https://www.zavazapp.com/apps/typing-robot";
 
 //    private final String VERSION = "version: 0.1.alpha\n\n2021"; //09 May 2021
     //String based loader added in hope to reduce dependancy on excel table format
-    private final String VERSION = "version: 0.2.alpha\n\n2021"; //12 May 2021
+//    private final String VERSION = "version: 0.2.alpha\n\n2021"; //12 May 2021
+    //Added TablePaser for different templates of excel specification
+    private final String VERSION = "version: 0.3.alpha\n\n2021"; //14 May 2021
 
     @FXML
     private Label dropField;
@@ -102,11 +110,13 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     @FXML
     private Label errorLabel;
     @FXML
-    private TextField totalSum; //total sum of invoices in table
+    private TextField totalSumTextField; //total sum of invoices in table
     @FXML
     private MenuItem menuItemUserInstrusctions;
     @FXML
     private Label userInstructions;
+    @FXML
+    private ComboBox<String> typeComboBox;
 
     //</editor-fold>
     //entry point - initialize variables and set up starting UI components
@@ -118,6 +128,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         preferences = new Preferences();
         hasHeaders.setSelected(preferences.getBoolean("hasHeader", true));
         errorLabel.setVisible(false);
+        setTypeComboBox();
     }
 
     //Save user choice for hasHeader check box choice
@@ -145,7 +156,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         handleStartStopButtons(true, false);
 
         File droppedFile = event.getDragboard().getFiles().get(0);
-        String fileExtension = FileNameUtils.getExtension(droppedFile.getName());
+        String fileExtension = FileNameUtils.getExtension(droppedFile.getName()).toLowerCase().trim();
 
         //FileLoader needs a File and its extension.
         //FileLoader also need boolean hasHeadre from user choice//deprecated
@@ -163,8 +174,13 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         //(AbstractRowBasedFileLoader)fileLoader).setStage((Stage)dropField.getScene().getWindow());
         ((AbstractStringBasedFileLoader) fileLoader).setStage((Stage) dropField.getScene().getWindow());
 
-        observableList.addAll(fileLoader.getList(fileExtension));
-        totalSum.setText(String.valueOf(fileLoader.getTotalSum()));
+        observableList.addAll(fileLoader.getList(fileExtension, specialType));
+        double sum = fileLoader.getTotalSum();
+        
+        System.out.println("SUM: +++++++++++ " + sum);
+        NumberFormat nf = NumberFormat.getInstance(Locale.US);
+        
+        totalSumTextField.setText(nf.format(sum));
         dropField.setText(droppedFile.getName());
     }
 
@@ -358,6 +374,29 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
 
         menu.getItems().add(item);
         menu.show(dropField.getScene().getWindow(), evt.getScreenX(), evt.getScreenY());
+    }
+
+    private void setTypeComboBox() {
+        //default
+        specialType = "AIK";
+        typeComboBox.getItems().addAll("AIK", "NEXE", "Perfect");
+        typeComboBox.getSelectionModel().select(0);
+        typeComboBox.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                switch (newValue.intValue()) {
+                    case 0:
+                        specialType = "AIK";
+                        break;
+                    case 1:
+                        specialType = "NEXE";
+                        break;
+                    case 2:
+                        specialType = "Perfect";
+                        break;
+                }
+            }
+        });
     }
 
 }
