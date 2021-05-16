@@ -64,6 +64,7 @@ public class TypingRobot extends Application {
             
             //set taskbar icon
             stage.getIcons().add(new Image(this.getClass().getResourceAsStream("resources/icon_v3.png")));
+            stage.setTitle("Invoice Typing");
             stage.show();
             stage.setOnCloseRequest((WindowEvent e1Event) -> {
                 Platform.exit();

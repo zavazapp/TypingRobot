@@ -37,6 +37,12 @@
                         <MenuItem fx:id="menuItemPreferences" mnemonicParsing="false" onAction="#onMenuItemPreferences" text="Preferences" />
                     </items>
                 </Menu>
+            <Menu mnemonicParsing="false" text="View">
+               <items>
+                  <MenuItem fx:id="menuItemMastercardCorrections" mnemonicParsing="false" onAction="#onMenuItemMastercardCorrections" text="MasterCard corrections" />
+                  <MenuItem fx:id="menuItemRezim" mnemonicParsing="false" onAction="#onMenuItemRezim" text="Rezim" />
+               </items>
+            </Menu>
                 <Menu mnemonicParsing="false" text="Help">
                     <items>
                         <MenuItem fx:id="menuItemAbout" mnemonicParsing="false" onAction="#onMenuItemAbout" text="About" />
@@ -49,7 +55,7 @@
          <children>
                   <AnchorPane HBox.hgrow="ALWAYS">
                       <children>
-                          <Label fx:id="dropField" alignment="TOP_CENTER" contentDisplay="CENTER" onContextMenuRequested="#onDropFieldContextMenuRequest" onDragDropped="#onDragDroped" onDragOver="#onDragOver" prefHeight="100.0" prefWidth="200.0" stylesheets="@../resources/smm_stylesheet.css" text="Drop excel file here. Suported extensions: xls, xlsx, csv" textAlignment="CENTER" textFill="WHITE" wrapText="true">
+                          <Label fx:id="dropField" alignment="TOP_CENTER" contentDisplay="CENTER" onContextMenuRequested="#onDropFieldContextMenuRequest" onDragDropped="#onDragDroped" onDragOver="#onDragOver" prefHeight="100.0" prefWidth="200.0" stylesheets="@../resources/smm_stylesheet.css" text="Drop or paste excel file here. Suported extensions: xls, xlsx, csv" textAlignment="CENTER" textFill="WHITE" wrapText="true">
                               <styleClass>
                                   <String fx:value="marginMedium" />
                                   <String fx:value="dropFieldBacground" />

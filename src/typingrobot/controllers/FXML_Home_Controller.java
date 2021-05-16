@@ -10,6 +10,8 @@ import java.net.URL;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -33,6 +35,8 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.image.Image;
+import javafx.scene.input.Clipboard;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseButton;
@@ -43,7 +47,7 @@ import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import org.apache.commons.compress.utils.FileNameUtils;
 import typingrobot.utils.AlertUtils;
-import typingrobot.tools.TypingUtility;
+import typingrobot.utils.typingUtils.TypingUtility_Invoices;
 
 import typingrobot.models.InvoiceRow;
 import typingrobot.controllers.interfaces.CurrentRowObservable;
@@ -52,7 +56,7 @@ import typingrobot.tools.fileLoading.FileLoadable;
 import typingrobot.tools.Preferences;
 import typingrobot.tools.fileLoading.srtingBasedLoader.AbstractStringBasedFileLoader;
 import typingrobot.tools.fileLoading.srtingBasedLoader.StringBasedLoaderFactory;
-import typingrobot.utils.NumberFormatUtils;
+import typingrobot.utils.VersionTracker;
 
 /**
  *
@@ -62,7 +66,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
 
     //<editor-fold desc="variables">
     private ObservableList<InvoiceRow> observableList;
-    private TypingUtility typingUtility;
+    private TypingUtility_Invoices typingUtility;
     private Preferences preferences;
     private String specialType;
     public final static String URL = "https://www.zavazapp.com/apps/typing-robot";
@@ -71,7 +75,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     //String based loader added in hope to reduce dependancy on excel table format
 //    private final String VERSION = "version: 0.2.alpha\n\n2021"; //12 May 2021
     //Added TablePaser for different templates of excel specification
-    private final String VERSION = "version: 0.3.alpha\n\n2021"; //14 May 2021
+    private final String VERSION = VersionTracker.getVersion();
 
     @FXML
     private Label dropField;
@@ -79,12 +83,6 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     private TableView<InvoiceRow> tableView;
     @FXML
     private TableColumn<?, ?> id;
-    @FXML
-    private TableColumn<?, ?> invoiceNumber;
-    @FXML
-    private TableColumn<?, ?> invoiceYear;
-    @FXML
-    private TableColumn<?, ?> invoiceAmount;
     @FXML
     private TextField delayTextField;
     @FXML
@@ -117,6 +115,16 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     private Label userInstructions;
     @FXML
     private ComboBox<String> typeComboBox;
+    @FXML
+    private MenuItem menuItemMastercardCorrections;
+    @FXML
+    private TableColumn<?, ?> invoiceNumber;
+    @FXML
+    private TableColumn<?, ?> invoiceYear;
+    @FXML
+    private TableColumn<?, ?> invoiceAmount;
+    @FXML
+    private MenuItem menuItemRezim;
 
     //</editor-fold>
     //entry point - initialize variables and set up starting UI components
@@ -159,29 +167,35 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         String fileExtension = FileNameUtils.getExtension(droppedFile.getName()).toLowerCase().trim();
 
         //FileLoader needs a File and its extension.
-        //FileLoader also need boolean hasHeadre from user choice//deprecated
-        //Returns ObservableList<InvoiceRow>
+        //FileLoader also need boolean hasHeadre from user choice//@Deprecated
         int rowOffset = 1;
         initFileLoader(fileExtension, droppedFile, rowOffset);
     }
 
+    //Fill variable observableList ObservableList<InvoiceRow>
     private void initFileLoader(String fileExtension, File droppedFile, int rowOffset) throws IOException {
+        //@Deprecated
         //FileLoadable fileLoader = RowBasedLoaderFactory.get(fileExtension, droppedFile, hasHeaders.isSelected(), rowOffset, this);
+
         FileLoadable fileLoader = StringBasedLoaderFactory.get(fileExtension, droppedFile, hasHeaders.isSelected(), rowOffset, this);
 
-        //Inject Stage variable to FileLoadable instance for accesing windoe
-        //Used to center secondary stages to center of app window
+        //Inject Stage variable to FileLoadable instance for accesing window.
+        //Used to center secondary stages to the center of app window.
+        //@Deprecated
         //(AbstractRowBasedFileLoader)fileLoader).setStage((Stage)dropField.getScene().getWindow());
         ((AbstractStringBasedFileLoader) fileLoader).setStage((Stage) dropField.getScene().getWindow());
 
+        //specialType is user choice for conviniance of different table formats
         observableList.addAll(fileLoader.getList(fileExtension, specialType));
         double sum = fileLoader.getTotalSum();
-        
-        System.out.println("SUM: +++++++++++ " + sum);
+
         NumberFormat nf = NumberFormat.getInstance(Locale.US);
-        
+
         totalSumTextField.setText(nf.format(sum));
-        dropField.setText(droppedFile.getName());
+        if (droppedFile != null) {
+            dropField.setText(droppedFile.getName());
+        }
+
     }
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -198,8 +212,8 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
             delay = 15;
         }
 
-        //Create TypingUtility object, set countDown label and set callback
-        typingUtility = new TypingUtility(Integer.parseInt(delayTextField.getText()));
+        //Create TypingUtility_Invoices object, set countDown label and set callback
+        typingUtility = new TypingUtility_Invoices(Integer.parseInt(delayTextField.getText()));
         typingUtility.setCountDownLabel(countDownLabel);
         typingUtility.setCurrentRowObservable(this);
 
@@ -219,7 +233,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         handleStartStopButtons(true, false);
     }
 
-    //calback from TypingUtility
+    //calback from TypingUtility_Invoices
     @Override
     public void onNextRow(int row) {
         Platform.runLater(new Runnable() {
@@ -236,7 +250,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         });
     }
 
-    //calback from TypingUtility
+    //calback from TypingUtility_Invoices
     @Override
     public void onLastRowFinished(int row) {
         handleStartStopButtons(true, false);
@@ -244,7 +258,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
 
     /*Start position handling*/
     @FXML
-    private void onTableRowClick(MouseEvent event) {
+    public void onTableRowClick(MouseEvent event) {
         if (event.getClickCount() == 1) {
             startingPositionLabel.setText(String.valueOf(getStartingPosition() + 1));
         }
@@ -252,7 +266,6 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
         if (event.getButton().equals(MouseButton.SECONDARY)) {
             onTableSecondaryButtonClicked(event);
         }
-
     }
 
     private int getStartingPosition() {
@@ -272,18 +285,62 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     @FXML
     private void onDropFieldContextMenuRequest(ContextMenuEvent event) {
         ContextMenu menu = new ContextMenu();
-        MenuItem item = new MenuItem("Clear table");
+        MenuItem itemClear = new MenuItem("Clear table");
 
-        item.setOnAction(new EventHandler<ActionEvent>() {
+        itemClear.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
                 observableList.clear();
                 startingPositionLabel.setText("1");
                 handleStartStopButtons(false, false);
                 errorLabel.setText("");
+                dropField.setText("Drop or paste excel file here. Suported extensions: xls, xlsx, csv");
+                totalSumTextField.setText("");
             }
         });
-        menu.getItems().add(item);
+
+        MenuItem itemPaste = new MenuItem("Paste");
+
+        itemPaste.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                observableList.clear();
+                startingPositionLabel.setText("1");
+                handleStartStopButtons(false, false);
+                errorLabel.setText("");
+
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                if (clipboard.hasFiles()) {
+                    handleStartStopButtons(true, false);
+
+                    File pastedFile = clipboard.getFiles().get(0);
+                    String fileExtension = FileNameUtils.getExtension(pastedFile.getName()).toLowerCase().trim();
+
+                    //FileLoader needs a File and its extension.
+                    //FileLoader also need boolean hasHeadre from user choice//@Deprecated
+                    int rowOffset = 1;
+                    try {
+                        initFileLoader(fileExtension, pastedFile, rowOffset);
+                    } catch (IOException ex) {
+                        Logger.getLogger(FXML_Home_Controller.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+
+                if (clipboard.hasString()) {
+                    try {
+                        handleStartStopButtons(true, false);
+                        initFileLoader(clipboard.getString(), null, 0);
+                    } catch (IOException ex) {
+                        Logger.getLogger(FXML_Home_Controller.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+
+            }
+        });
+
+        menu.getItems().add(itemClear);
+        menu.getItems().add(itemPaste);
+        menu.setAutoHide(true);
         menu.show(dropField.getScene().getWindow(), event.getScreenX(), event.getScreenY());
     }
 
@@ -295,7 +352,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
 
     //Menu items
     @FXML
-    private void onMenuItemClose(ActionEvent event) {
+    public void onMenuItemClose(ActionEvent event) {
         System.exit(0);
     }
 
@@ -315,7 +372,7 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
     }
 
     @FXML
-    private void onMenuItemUserInstructions(ActionEvent event) throws IOException {
+    public void onMenuItemUserInstructions(ActionEvent event) throws IOException {
         showWebViewStageInBrowser();
 //        showWebViewStage();
     }
@@ -330,8 +387,50 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
                 VERSION)
                 .show();
     }
+
+    @FXML
+    public void onMenuItemMastercardCorrections(ActionEvent event) throws IOException {
+        Parent root = FXMLLoader.load(FXML_Home_Controller.class.getResource("/typingrobot/fxml/FXML_Dekada_MasterCard.fxml"));
+        Stage stage = new Stage();
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.initStyle(StageStyle.DECORATED);
+        Window w = dropField.getScene().getWindow();
+
+        //set taskbar icon
+        stage.getIcons().add(new Image(this.getClass().getResourceAsStream("/typingrobot/resources/icon_v3.png")));
+        stage.setX(w.getX() + 50);
+        stage.setY(w.getY() + 50);
+        
+        stage.setTitle("Dekada - MasterCard");
+
+        stage.show();
+        w.hide();
+
+    }
+
+    @FXML
+    public void onMenuItemRezim(ActionEvent event) throws IOException {
+        Parent root = FXMLLoader.load(FXML_Home_Controller.class.getResource("/typingrobot/fxml/FXML_Rezim.fxml"));
+        Stage stage = new Stage();
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.initStyle(StageStyle.DECORATED);
+        Window w = dropField.getScene().getWindow();
+
+        //set taskbar icon
+        stage.getIcons().add(new Image(this.getClass().getResourceAsStream("/typingrobot/resources/icon_v3.png")));
+        stage.setX(w.getX() + 50);
+        stage.setY(w.getY() + 50);
+        
+        stage.setTitle("Rezim");
+
+        stage.show();
+        w.hide();
+    }
     //END Menu items
 
+    
     @FXML
     private void onUserInstructionsClick(MouseEvent event) throws IOException {
         showWebViewStageInBrowser();
@@ -378,20 +477,23 @@ public class FXML_Home_Controller implements Initializable, CurrentRowObservable
 
     private void setTypeComboBox() {
         //default
-        specialType = "AIK";
-        typeComboBox.getItems().addAll("AIK", "NEXE", "Perfect");
+        specialType = "AIK-Spec-112";
+        typeComboBox.getItems().addAll("AIK-Spec-112", "AIK-70", "NEXE", "Perfect");
         typeComboBox.getSelectionModel().select(0);
         typeComboBox.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
                 switch (newValue.intValue()) {
                     case 0:
-                        specialType = "AIK";
+                        specialType = "AIK-Spec-112";
                         break;
                     case 1:
-                        specialType = "NEXE";
+                        specialType = "AIK-70";
                         break;
                     case 2:
+                        specialType = "NEXE";
+                        break;
+                    case 3:
                         specialType = "Perfect";
                         break;
                 }

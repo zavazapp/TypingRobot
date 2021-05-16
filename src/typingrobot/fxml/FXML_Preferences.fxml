@@ -14,7 +14,7 @@
             <CheckBox fx:id="addEnterCheckBox" mnemonicParsing="false" onAction="#onCheckBoxAction" styleClass="paddingLarge" stylesheets="@../resources/smm_stylesheet.css" text="Add another ENTER after row end" />
             <CheckBox fx:id="addDoubleEnterCheckBox" mnemonicParsing="false" onAction="#onCheckBoxAction" styleClass="paddingLarge" stylesheets="@../resources/smm_stylesheet.css" text="Add double ENTER after row end" />
             <CheckBox fx:id="addArrowDownCheckBox" mnemonicParsing="false" onAction="#onCheckBoxAction" styleClass="paddingLarge" stylesheets="@../resources/smm_stylesheet.css" text="Add ARROW_DOWN after all to begin new row" />
-            <CheckBox fx:id="typeIdsCheckBox" mnemonicParsing="false" onAction="#onCheckBoxAction" styleClass="paddingLarge" stylesheets="@../resources/smm_stylesheet.css" text="Type Ids" />
+            <CheckBox fx:id="typeIdsCheckBox" mnemonicParsing="false" onAction="#onCheckBoxAction" styleClass="paddingLarge" stylesheets="@../resources/smm_stylesheet.css" text="Type Ids (use for &quot;Podaci za NBS&quot;) - uncheck arrow down" />
             <CheckBox fx:id="typeInvoiceInDscCheckBox" mnemonicParsing="false" onAction="#onCheckBoxAction" styleClass="paddingLarge" stylesheets="@../resources/smm_stylesheet.css" text="Type invoice in description" />
          </children>
       </VBox>

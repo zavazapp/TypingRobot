@@ -39,7 +39,7 @@ public class FXML_Preferences_Controller implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         addEnterCheckBox.setSelected(preferences.getBoolean("addEnterCheckBox", false));
         addDoubleEnterCheckBox.setSelected(preferences.getBoolean("addDoubleEnterCheckBox", false));
-        addArrowDownCheckBox.setSelected(preferences.getBoolean("addArrowDownCheckBox", false));
+        addArrowDownCheckBox.setSelected(preferences.getBoolean("addArrowDownCheckBox", true));
         typeIdsCheckBox.setSelected(preferences.getBoolean("typeIdsCheckBox", false));
         typeInvoiceInDscCheckBox.setSelected(preferences.getBoolean("typeInvoiceInDscCheckBox", false));
     }    

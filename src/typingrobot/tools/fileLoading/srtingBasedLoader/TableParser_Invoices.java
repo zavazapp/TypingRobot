@@ -9,12 +9,11 @@ import java.util.regex.Pattern;
 /**
  * 14.05.2022.
  *
- * @author Miodrag Spasic
- * This class handles different excel templates 
+ * @author Miodrag Spasic This class handles different excel templates
  *
  * This class converts excel string to table.
  */
-public class TableParser {
+public class TableParser_Invoices {
 
     private Pattern pattern;
     private int rowId = 1;
@@ -22,7 +21,7 @@ public class TableParser {
     public ArrayList<String[]> getTableArray(String args, String specialType, int firstTableRow) {
         ArrayList<String[]> table = new ArrayList<>();
 
-        System.out.println(args);
+//        System.out.println(args);
         String[] rows = args.split("\n");
 
         switch (specialType) {
@@ -93,7 +92,7 @@ public class TableParser {
                 }
                 break;
 
-            case "AIK":
+            case "AIK-Spec-112":
 
                 //Try to find biggining of a table
                 for (int i = 0; i < rows.length; i++) {
@@ -138,7 +137,79 @@ public class TableParser {
 
                         //amount
                         finalRow[4] = tempRow[4];
-                        
+
+                        table.add(finalRow);
+                    }
+                }
+                break;
+
+            case "AIK-70":
+
+                //Try to find biggining of a table
+                for (int i = 0; i < rows.length; i++) {
+                    String[] row = Arrays.stream(rows[i].split("\t"))
+                            .filter(new Predicate<String>() {
+                                @Override
+                                public boolean test(String t) {
+                                    return !t.trim().isEmpty();
+                                }
+                            }).toArray(String[]::new);
+                    if (row.length > 3 && row[0].equals("1")) {
+                        firstTableRow = i;
+                        break;
+                    }
+                }
+
+                System.out.println("firstTableRow" + firstTableRow);
+                //END try to find first row
+
+                for (int i = firstTableRow; i < rows.length; i++) {
+                    String[] tempRow = Arrays.stream(rows[i].split("\t"))
+                            .filter(new Predicate<String>() {
+                                @Override
+                                public boolean test(String t) {
+                                    return !t.trim().isEmpty();
+                                }
+                            }).toArray(String[]::new);
+                    if (tempRow.length == 4) {
+                        String[] finalRow = new String[5];
+
+                        //id
+                        finalRow[0] = tempRow[0];
+
+                        //payment code
+                        finalRow[1] = tempRow[1];
+
+                        //invoice number
+                        finalRow[2] = tempRow[2];
+
+                        //year
+                        finalRow[3] = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+
+                        //amount
+                        finalRow[4] = tempRow[3];
+
+                        table.add(finalRow);
+                    }
+
+                    if (tempRow.length == 5) {
+                        String[] finalRow = new String[5];
+
+                        //id
+                        finalRow[0] = tempRow[0];
+
+                        //payment code
+                        finalRow[1] = "112";
+
+                        //invoice number
+                        finalRow[2] = tempRow[1];
+
+                        //year
+                        finalRow[3] = tempRow[2].trim();
+
+                        //amount
+                        finalRow[4] = tempRow[4];
+
                         table.add(finalRow);
                     }
                 }

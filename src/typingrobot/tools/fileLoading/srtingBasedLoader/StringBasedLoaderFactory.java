@@ -17,6 +17,9 @@ public class StringBasedLoaderFactory {
 
     public static FileLoadable get(String fileExtension, File fileToLoad, boolean hasHeaders, int startRow, IErrorInterface errorCallback) {
 
+        if (fileExtension.length() > 6) {
+            return new StringFileLoader_StringBased(fileToLoad, hasHeaders, startRow, errorCallback);
+        }
         switch (fileExtension) {
             case "xlsx":
                 return new XLSXFileLoader_StringBased(fileToLoad, hasHeaders, startRow, errorCallback);

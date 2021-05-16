@@ -52,8 +52,9 @@ public class XLSFileLoader_StringBased extends AbstractStringBasedFileLoader imp
             s1 = w1.getSheetAt(0);
 
             ExcelExtractor extractor = new ExcelExtractor(w1);
+            extractor.setIncludeCellComments(false);
             
-            table = new TableParser().getTableArray(extractor.getText(), specialType, firstTableRow);
+            table = new TableParser_Invoices().getTableArray(extractor.getText(), specialType, firstTableRow);
 
             //count columns in table
             //if there are 5 columns, one of them is paymentCode

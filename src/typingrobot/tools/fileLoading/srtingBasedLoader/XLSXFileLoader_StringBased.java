@@ -5,9 +5,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.function.Predicate;
+import java.util.Optional;
 import javafx.collections.ObservableList;
+import javafx.scene.control.ChoiceDialog;
 import org.apache.poi.xssf.extractor.XSSFExcelExtractor;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -55,9 +55,33 @@ public class XLSXFileLoader_StringBased extends AbstractStringBasedFileLoader im
             w = new XSSFWorkbook(inputStream);
             s = w.getSheetAt(0);
 
+            int sheetCount = w.getNumberOfSheets();
+
+            String[] sheetNames = new String[sheetCount];
+            for (int i = 0; i < sheetCount; i++) {
+                sheetNames[i] = w.getSheetAt(i).getSheetName();
+            }
+
+            if (sheetCount > 1) {
+                ChoiceDialog<String> choiceDialog = new ChoiceDialog(sheetNames[0], sheetNames);
+                choiceDialog.setTitle("Multiple sheets found");
+                choiceDialog.setHeaderText("Choose sheet..");
+                choiceDialog.setContentText("My table is in sheet: ");
+                choiceDialog.initOwner(stage);
+
+                Optional<String> choice = choiceDialog.showAndWait();
+
+                for (String sheetName : sheetNames) {
+                    if (!sheetName.equals(choice.get())) {
+                        w.removeSheetAt(w.getSheetIndex(sheetName));
+                    }
+                }
+            }
+
             XSSFExcelExtractor extractor = new XSSFExcelExtractor(w);
-            
-            table = new TableParser().getTableArray(extractor.getText(), specialType, firstTableRow);
+            extractor.setIncludeCellComments(false);
+
+            table = new TableParser_Invoices().getTableArray(extractor.getText(), specialType, firstTableRow);
 
             //count columns in table
             //if there are 5 columns, one of them is paymentCode
@@ -66,7 +90,7 @@ public class XLSXFileLoader_StringBased extends AbstractStringBasedFileLoader im
             colCount = table.get(0).length;
 
         } catch (Exception e) {
-            System.out.println("Ecxeption in line " + 69);
+            System.out.println("Ecxeption in line " + 69 + e.getMessage());
             showLoadingError();
             inputStream.close();
             return null;
